@@ -1,0 +1,211 @@
+"DO NOT FORGET BASICS ELEMENTS OR COMPONENTS"
+
+HTML
+
+<body>
+   <h1 id="title">United States GDP</h1>
+
+  <div id="barchartProyect"> </div>
+</body>
+
+
+CSS
+
+h1{
+  color:red;
+    text-align:center;
+   display:block;
+}
+
+  .bar {
+            fill: steelblue;
+        }
+
+
+div.tooltip {
+  position: absolute;
+
+  padding: 10px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+#barchartProyect{
+ display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50%;
+}
+
+
+JS
+
+ 
+
+d3.json('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json')
+
+	.then((data) => {
+      var div = d3
+  .select("#barchartProyect")
+  .append('div')
+  .attr('class', 'tooltip')
+  .attr('id', 'tooltip')
+  .style('opacity', 0);
+  
+  let dataset = [];
+      let values = [];
+      let years = [];
+      let yearsNoDuplicates = [];
+      let quarters = [];
+
+      for (let i = 0; i < data.data.length; i++) {
+        let year = data.data[i][0];
+        let month = data.data[i][0].substring(
+          data.data[i][0].length - 5,
+         data.data[i][0].length - 3
+        );
+        let q = null;
+
+        if (parseInt(month) <= 3) {
+          q = "Q1";
+        }
+
+        else if (parseInt(month) <= 6 && parseInt(month) > 3) {
+          q = "Q2";
+        }
+
+        else if (
+          parseInt(month) <= 9 &&
+          parseInt(month) > 6 &&
+          parseInt(month) > 3
+        ) {
+          q = "Q3";
+        }
+
+        else if (
+          parseInt(month) <= 12 &&
+          parseInt(month) > 9 &&
+          parseInt(month) > 6 &&
+          parseInt(month) > 3
+        ) {
+          q = "Q4";
+        }
+        dataset.push([data.data[i][1], year, q]);
+
+        values.push(data.data[i][1]);
+        years.push(parseInt(year.substring(0, 4)));
+        quarters.push(q);
+      }
+      yearsNoDuplicates = years.filter((item, i) => {
+        return i === years.indexOf(item);
+      });
+
+      const w = 800;
+      const h = 600;
+
+      const m = { top: 40, right: 40, bottom: 40, left: 40 }
+      
+       const svg = d3
+        .select("#barchartProyect")
+        .append("svg")
+        .attr("width", w + m.left + m.right)
+        .attr("height", h + m.top + m.bottom);
+ svg
+      .append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('x', -200)
+      .attr('y',65)
+      .style('font-size', 18)
+      .text('Gross Domestic Product');
+    svg
+      .append('text')
+      .attr('transform', 'rotate(0)')
+      .attr('x', 700)
+      .attr('y', 670)
+      .style('font-size', 18)
+      .text('Years');
+  
+      const g = svg
+        .append("g")
+        .attr("transform", "translate(" + m.left + "," + m.top + ")");
+
+      let xScale = d3
+        .scaleLinear()
+        .range([0, w])
+        .domain([0, values.length - 1]);
+
+      const xAxis = d3.axisBottom(xScale).tickFormat((d, i) => {
+        return d % 5 != 0 ? " " : years[d]; //is equivalent to return years[d];
+      });
+
+      g.append("g")
+        .attr("transform", "translate(0," + h + ")")
+        .attr("class", "tick axis")
+        .attr("id", "x-axis")
+        .call(xAxis);
+
+      let yScale = d3
+        .scaleLinear()
+        .range([h, 0])
+        .domain([0, dataset[dataset.length - 1][0]]);
+
+      const yAxis = d3.axisLeft(yScale);
+
+      g.append("g")
+        .attr("transform", "translate(0, 0)")
+        .attr("class", "tick axis")
+        .attr("id", "y-axis")
+        .attr("fill", "red")
+        .call(yAxis);
+
+      g.selectAll("rect")
+        .data(dataset)
+        .enter()
+        .append("rect")
+        .attr("id", (d, i) => {
+          return "tipX" + i;
+        })
+        .attr("x", (d, i) => {
+          return xScale(i);
+        })
+        .attr("y", (d) => {
+          return yScale(d[0]);
+        })
+        .attr("height", (d) => {
+          return h - yScale(d[0]);
+        })
+        .attr("width", (d, i) => {
+          return w - xScale(i);
+        })
+        .attr("data-date", (d, i) => {
+          return d[1];
+        })
+        .attr("data-gdp", (d, i) => {
+          return d[0];
+        })
+        .attr("class", "bar")
+  
+   .on('mouseover', function (item, d) {
+     div.style('opacity', 0.9);
+   div.attr("data-date",  d[1]) 
+     
+         div.html (
+         "Year  "+ d[1].toString(10).slice(0,4)+"<br/>"+
+            d[0] +" Billion Dollars"
+          )
+     .style('left', event.pageX + 'px')
+          .style('top', event.pageY - 28 + 'px');
+  })
+    .on('mouseout', function () {
+        div.style('opacity', 0);
+      })
+  
+       
+	})
+  .catch((e) => console.log(e));
+
+
+
